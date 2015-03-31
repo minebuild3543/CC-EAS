@@ -1,0 +1,96 @@
+args = {...}
+alert = nil
+notes = nil
+
+function error_show()
+ print("EMERGENCY ALERT SYSTEM")
+ print("")
+ print("Available event codes:")
+ print("EAN, EAT, EVI, CDW, CEM, ADM, LAE, LEW,")
+ print("NIC, HMW, SPW, SVS, TOR, BHW, CHW.")
+ print("See \"Specific Area Message Encoding\"")
+ print("on Wikipedia for further information.")
+ printError("Usage: eas")
+ return
+end
+
+function openModems()
+ for _, v in pairs(rs.getSides()) do
+  if peripheral.getType(v) == "modem" then
+   rednet.open(v)
+  end
+ end
+end
+
+function broadcastAlert(same_dec, message)
+ print("You are going to broadcast:")
+ print("Alert type: "..same_dec)
+ print("Description: "..message)
+ write("Confirm? [Y/N]")
+ local input = read()
+ if input == "Y" or input == "y" then
+  rednet.broadcast(same_dec.." has been issued with text \""..message.."\"", "easp")
+  print("Broadcasted successfully")
+ else
+  print("Cancelled")
+ end
+end
+
+function same_decode(code)
+ local same_d = nil
+ if code == "EAN" then
+  same_d = "Emergency Action Notification"
+ elseif code == "EAT" then
+  same_d = "Emergency Action Termination"
+ elseif code == "EVI" then
+  same_d = "Evacuation Immediate"
+ elseif code == "CDW" then
+  same_d = "Civil Danger Warning"
+ elseif code == "CEM" then
+  same_d = "Civil Emergency Message"
+ elseif code == "ADM" then
+  same_d = "Administrative Message"
+ elseif code == "LAE" then
+  same_d = "Local Area Emergency"
+ elseif code == "LEW" then
+  same_d = "Law Enforcement Warning"
+ elseif code == "NIC" then
+  same_d = "National Information Center Statement"
+ elseif code == "HMW" then
+  same_d = "Hazardous Materials Warning"
+ elseif code == "SPW" then
+  same_d = "Shelter-In-Place Warning"
+ elseif code == "SVS" then
+  same_d = "Severe Weather Statement"
+ elseif code == "TOR" then
+  same_d = "Tornado Warning"
+ elseif code == "BHW" then
+  same_d = "Biological Hazard Warning"
+ elseif code == "CHW" then
+  same_d = "Chemical Hazard Warning"
+ else
+  error_show()
+ end
+ return same_d
+end
+
+openModems()
+term.clear()
+term.setCursorPos(15, 1)
+print("EMERGENCY ALERT SYSTEM")
+print("")
+print("Available event codes:")
+print("EAN, EAT, EVI, CDW, CEM, ADM, LAE, LEW,")
+print("NIC, HMW, SPW, SVS, TOR, BHW, CHW.")
+print("See \"Specific Area Message Encoding\"")
+print("on Wikipedia for further information.")
+write("Enter event code: ")
+local inputc = read()
+print("Received code: ".. same_decode(inputc))
+alert = same_decode(inputc)
+print("")
+write("Enter message: ")
+local inputm = read()
+print("Received text: "..inputm)
+notes = inputm
+broadcastAlert(alert, notes)
