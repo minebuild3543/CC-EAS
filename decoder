@@ -1,0 +1,35 @@
+function openModems()
+ for _, v in pairs(rs.getSides()) do
+  if peripheral.getType(v) == "modem" then
+   rednet.open(v)
+  end
+ end
+end
+
+function react(msg)
+ print("["..textutils.formatTime(os.time(), false).."] "..msg)
+ pulse(10, "back")
+end
+
+function pulse(sec, side)
+ local num = sec
+ while true do
+  local oldNum = num
+  redstone.setOutput(side,true)
+  sleep(0.5)
+  redstone.setOutput(side,false)
+  sleep(0.5)
+  num = oldNum - 1
+  if num == 0 then break end
+ end
+end
+
+openModems()
+term.clear()
+term.setCursorPos(1, 1)
+print("EAS Decoder v1.0")
+print("["..textutils.formatTime(os.time(), false).."] Starting EAS decoder")
+while true do
+senderId, message, protocol = rednet.receive("easp")
+react(message)
+end
