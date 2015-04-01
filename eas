@@ -1,7 +1,25 @@
 args = {...}
 alert = nil
 notes = nil
-
+ 
+function mouse_wrapper(minX, maxX, Y)
+ event, button, xPos, yPos = os.pullEvent(mouse_click)
+ if (xPos >= minX or xPos <= maxX and yPos == Y) then
+  return true
+ else
+  return false
+ end
+end
+ 
+function key_wrapper(keyYes)
+ event, key = os.pullEvent(mouse_click)
+ if key==keyYes then
+  return true
+ else
+  return false
+ end
+end
+ 
 function error_show()
  print("EMERGENCY ALERT SYSTEM")
  print("")
@@ -13,7 +31,7 @@ function error_show()
  printError("Usage: eas")
  return
 end
-
+ 
 function openModems()
  for _, v in pairs(rs.getSides()) do
   if peripheral.getType(v) == "modem" then
@@ -21,21 +39,31 @@ function openModems()
   end
  end
 end
-
+ 
 function broadcastAlert(same_dec, message)
+ term.clear()
+ term.setCursorPos(1, 1)
  print("You are going to broadcast:")
  print("Alert type: "..same_dec)
  print("Description: "..message)
- write("Confirm? [Y/N]")
- local input = read()
- if input == "Y" or input == "y" then
-  rednet.broadcast(same_dec.." has been issued with text \""..message.."\"", "easp")
-  print("Broadcasted successfully")
+ print("[Broadcast (Y)]         [Cancel]")
+ if term.isColour() then
+  if mouse_wrapper(1,14,4) then
+   rednet.broadcast(same_dec.." has been issued with text \""..message.."\"", "easp")
+   print("Broadcasted successfully")
+  else
+   print("Cancelled")
+  end
  else
-  print("Cancelled")
+  if key_wrapper("Y") then
+   rednet.broadcast(same_dec.." has been issued with text \""..message.."\"", "easp")
+   print("Broadcasted successfully")
+  else
+   print("Cancelled")
+  end
  end
 end
-
+ 
 function same_decode(code)
  local same_d = nil
  if code == "EAN" then
@@ -73,7 +101,7 @@ function same_decode(code)
  end
  return same_d
 end
-
+ 
 openModems()
 term.clear()
 term.setCursorPos(15, 1)
