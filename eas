@@ -1,96 +1,154 @@
 args = {...}
 alert = nil
+sender = nil
 notes = nil
-
-function error_show()
- print("EMERGENCY ALERT SYSTEM")
- print("")
- print("Available event codes:")
- print("EAN, EAT, EVI, CDW, CEM, ADM, LAE, LEW,")
- print("NIC, HMW, SPW, SVS, TOR, BHW, CHW.")
- print("See \"Specific Area Message Encoding\"")
- print("on Wikipedia for further information.")
- printError("Usage: eas")
- return
+isDebugging = false
+ 
+function mouse_wrapper(minX, maxX, Y)
+ event, button, xPos, yPos = os.pullEvent(mouse_click)
+ if (xPos >= minX or xPos <= maxX and yPos == Y) then
+  return true
+ else
+  return false
+ end
 end
-
+ 
+function key_wrapper(keyYes)
+ event, key = os.pullEvent(mouse_click)
+ if key==keyYes then
+  return true
+ else
+  return false
+ end
+end
+ 
+function doError()
+ error("Wrong event code")
+end
+ 
 function openModems()
  for _, v in pairs(rs.getSides()) do
   if peripheral.getType(v) == "modem" then
    rednet.open(v)
+   if isDebugging then print("[Debug mode] Attempted to open modem on side: "..v) end
   end
  end
 end
-
-function broadcastAlert(same_dec, message)
+ 
+function broadcastAlert(same_dec, sndr, message)
+ term.clear()
+ term.setCursorPos(1, 1)
  print("You are going to broadcast:")
  print("Alert type: "..same_dec)
+ print("Sender: "..sndr)
  print("Description: "..message)
- write("Confirm? [Y/N]")
- local input = read()
- if input == "Y" or input == "y" then
-  rednet.broadcast(same_dec.." has been issued with text \""..message.."\"", "easp")
-  print("Broadcasted successfully")
+ print("[Broadcast (Y)]         [Cancel]")
+ if term.isColour() then
+  if mouse_wrapper(1,14,4) then
+   rednet.broadcast(same_dec.." has been issued by "..sndr.." with text \""..message.."\"", "easp")
+   if isDebugging then print("[Debug mode] Attempted to broadcast EAS transmission") end
+   print("Broadcasted successfully")
+  else
+   print("Cancelled")
+  end
  else
-  print("Cancelled")
+  if key_wrapper("Y") then
+   if isDebugging then print("[Debug mode] Attempted to broadcast EAS transmission") end
+   rednet.broadcast(same_dec.." has been issued by "..sndr.." with text \""..message.."\"", "easp")
+   print("Broadcasted successfully")
+  else
+   print("Cancelled")
+  end
  end
 end
-
+ 
 function same_decode(code)
  local same_d = nil
  if code == "EAN" then
   same_d = "Emergency Action Notification"
+  sender = "EAN Network"
  elseif code == "EAT" then
   same_d = "Emergency Action Termination"
+  sender = "EAN Network"
  elseif code == "EVI" then
   same_d = "Evacuation Immediate"
+  sender = "Civil Authorities"
  elseif code == "CDW" then
   same_d = "Civil Danger Warning"
+  sender = "Civil Authorities"
  elseif code == "CEM" then
   same_d = "Civil Emergency Message"
+  sender = "Civil Authorities"
  elseif code == "ADM" then
   same_d = "Administrative Message"
+  sender = "Civil Authorities"
  elseif code == "LAE" then
   same_d = "Local Area Emergency"
+  sender = "Civil Authorities"
  elseif code == "LEW" then
   same_d = "Law Enforcement Warning"
+  sender = "Civil Authorities"
  elseif code == "NIC" then
   same_d = "National Information Center Statement"
+  sender = "National Information Center"
  elseif code == "HMW" then
   same_d = "Hazardous Materials Warning"
+  sender = "Environmental Protection Agency"
  elseif code == "SPW" then
   same_d = "Shelter-In-Place Warning"
+  sender = "Civil Authorities"
  elseif code == "SVS" then
   same_d = "Severe Weather Statement"
+  sender = "National Weather Service"
  elseif code == "TOR" then
   same_d = "Tornado Warning"
+  sender = "National Weather Service"
  elseif code == "BHW" then
   same_d = "Biological Hazard Warning"
+  sender = "Centers for Disease Control and Prevention"
  elseif code == "CHW" then
   same_d = "Chemical Hazard Warning"
+  sender = "Centers for Disease Control and Prevention"
+ elseif code == "FCW" then
+  same_d = "Food Contamination Warning"
+  sender = "Centers for Disease Control and Prevention"
+ elseif code == "WCW" then
+  same_d = "Water Contamination Warning"
+  sender = "Centers for Disease Control and Prevention"
  else
-  error_show()
+  doError()
  end
  return same_d
 end
-
+ 
 openModems()
+term.clear()
+term.setCursorPos(1, 1)
+if args[1] == "-debug" then
+ if term.isColour then
+  print("[Debug mode] Running on Advanced PC.")
+ else
+  print("[Debug mode] Running on Standard PC.")
+ end
+ isDebugging = true
+end
+sleep(0.5)
 term.clear()
 term.setCursorPos(15, 1)
 print("EMERGENCY ALERT SYSTEM")
 print("")
 print("Available event codes:")
-print("EAN, EAT, EVI, CDW, CEM, ADM, LAE, LEW,")
-print("NIC, HMW, SPW, SVS, TOR, BHW, CHW.")
+print("EAN, EAT, NIC, EVI, CDW, CEM, ADM, LAE, LEW,")
+print("HMW, SPW, SVS, TOR, BHW, CHW, FCW, WCW.")
 print("See \"Specific Area Message Encoding\"")
 print("on Wikipedia for further information.")
 write("Enter event code: ")
 local inputc = read()
-print("Received code: ".. same_decode(inputc))
+if isDebugging then print("[Debug mode] Received Event Code: "..inputc) end
+print("Received type: ".. same_decode(inputc))
 alert = same_decode(inputc)
-print("")
 write("Enter message: ")
 local inputm = read()
 print("Received text: "..inputm)
 notes = inputm
-broadcastAlert(alert, notes)
+broadcastAlert(alert, sender, notes)
