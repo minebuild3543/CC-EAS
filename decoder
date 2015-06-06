@@ -1,16 +1,24 @@
+args = {...}
+isDebugging = false
+ 
 function openModems()
  for _, v in pairs(rs.getSides()) do
   if peripheral.getType(v) == "modem" then
    rednet.open(v)
+   print("DEBUG: Attempted to open modem on side: "..v)
   end
  end
 end
-
+ 
 function react(msg)
+ if term.isColour() then
+  term.setTextColor(colors.orange)
+ end
  print("["..textutils.formatTime(os.time(), false).."] "..msg)
  pulse(10, "back")
+ term.setTextColor(colors.white)
 end
-
+ 
 function pulse(sec, side)
  local num = sec
  while true do
@@ -23,13 +31,20 @@ function pulse(sec, side)
   if num == 0 then break end
  end
 end
-
+ 
 openModems()
+if args[1] == "-debug" then isDebugging = true end
 term.clear()
 term.setCursorPos(1, 1)
 print("EAS Decoder v1.0")
-print("["..textutils.formatTime(os.time(), false).."] Starting EAS decoder")
+print("["..textutils.formatTime(os.time(), false).."] Started EAS decoder")
+if isDebugging then
+ if term.isColour() then
+  print("["..textutils.formatTime(os.time(), false).."] DEBUG: EAS decoder is working on an Advanced PC")
+ end
+end
 while true do
 senderId, message, protocol = rednet.receive("easp")
+if isDebugging then print("["..textutils.formatTime(os.time(), false).."] DEBUG: Received EAS transmission from "..senderId) end
 react(message)
 end
